@@ -1,0 +1,10 @@
+{
+    "require": {
+        "f1r3starter/brackets": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "application\\" : "src"
+        }
+    }
+}

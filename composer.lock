@@ -1,0 +1,59 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "d7a100d5b9cea92707d8199b3c7288a7",
+    "packages": [
+        {
+            "name": "f1r3starter/brackets",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/f1r3starter/brackets.git",
+                "reference": "ae9822b86585a5c6492f4dbd8975f6dc710d35f0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/f1r3starter/brackets/zipball/ae9822b86585a5c6492f4dbd8975f6dc710d35f0",
+                "reference": "ae9822b86585a5c6492f4dbd8975f6dc710d35f0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0"
+            },
+            "type": "library",
+            "extra": {
+                "class": "Brackets\\"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Brackets\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Andrii Filenko",
+                    "email": "andrey.filenochko@gmail.com"
+                }
+            ],
+            "description": "Yet another composer package",
+            "time": "2018-07-06T14:03:57+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "f1r3starter/brackets": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}
