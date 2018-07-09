@@ -10,11 +10,23 @@ namespace application;
 
 class SocketServer
 {
-    private $address = '127.0.0.1';
-    private $port = 1234;
-    private $backlog = 5;
+    private $address;
+    private $port;
+    private $backlog;
     private $socket;
     private $connection;
+
+    public function __construct($address = '127.0.0.1', $port = 1234, $backlog = 5)
+    {
+        $this->address = $address;
+        $this->port = $port;
+        $this->backlog = $backlog;
+    }
+
+    public function startSocket()
+    {
+        $this->createSocket()->bindSocket()->listenSocket();
+    }
 
     public function setBacklog($backlog)
     {
@@ -53,7 +65,7 @@ class SocketServer
         }
     }
 
-    public function createSocket()
+    protected function createSocket()
     {
         if (($this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) === false) {
            throw new NetworkException('socket_create() failed: reason: ' . socket_strerror(socket_last_error()) . "\n");
@@ -61,7 +73,7 @@ class SocketServer
         return $this;
     }
 
-    public function bindSocket()
+    protected function bindSocket()
     {
         $this->isResource($this->socket);
         if (socket_bind($this->socket, $this->address, $this->port) === false) {
@@ -70,7 +82,7 @@ class SocketServer
         return $this;
     }
 
-    public function listenSocket()
+    protected function listenSocket()
     {
         $this->isResource($this->socket);
         if (socket_listen($this->socket, 5) === false) {

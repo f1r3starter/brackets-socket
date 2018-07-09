@@ -1,4 +1,7 @@
 {
+    "name": "f1r3starter/brackets-socket",
+    "description": "Socket client for brackets library",
+    "type": "project",
     "require": {
         "f1r3starter/brackets": "dev-master"
     },

@@ -8,12 +8,12 @@
 
 namespace application;
 
-use brackets\Brackets;
+use Brackets\Brackets;
 
 class Application
 {
     private static $messages = [
-        'welcomeMessage' => "Please, enter full path to file with brackets\r\n",
+        'welcomeMessage' => "Please, enter your brackets \r\n",
         'correctBrackets' => "The string has correct brackets order.\r\n",
         'incorrectBrackets' => "The string has incorrect brackets order.\r\n"
     ];
@@ -22,7 +22,7 @@ class Application
     {
         $socketServer = new SocketServer();
         try {
-            $socketServer->createSocket()->bindSocket()->listenSocket();
+            $socketServer->startSocket();
             $socketServer->acceptConnection();
             $socketServer->sendMessage(self::$messages['welcomeMessage']);
             $data = $socketServer->readMessage();
