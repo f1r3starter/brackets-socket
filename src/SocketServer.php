@@ -8,6 +8,8 @@
 
 namespace application;
 
+use brackets\Brackets;
+
 class SocketServer
 {
     private $address;
@@ -15,6 +17,11 @@ class SocketServer
     private $backlog;
     private $socket;
     private $connection;
+    private $clients = [];
+    private $read;
+    private $write = null;
+    private $except = null;
+    private $writeSocket;
 
     public function __construct($address = '127.0.0.1', $port = 1234, $backlog = 5)
     {
@@ -88,14 +95,19 @@ class SocketServer
         if (socket_listen($this->socket, 5) === false) {
             throw new NetworkException( "socket_listen() failed: reason: " . socket_strerror(socket_last_error($this->socket)) . "\n");
         }
+        $this->clients = [$this->socket];
         return $this;
     }
 
     public function acceptConnection()
     {
         $this->isResource($this->socket);
-        if (($this->connection = socket_accept($this->socket)) === false) {
-            throw new NetworkException( 'socket_accept() failed: reason: ' . socket_strerror(socket_last_error($this->socket)) . "\n");
+        if (in_array($this->connection, $this->read)) {
+            if (($this->clients[] = $this->connection = socket_accept($this->socket)) === false) {
+                throw new NetworkException('socket_accept() failed: reason: ' . socket_strerror(socket_last_error($this->socket)) . "\n");
+            }
+            $key = array_search($this->socket, $this->read);
+            unset($this->read, $key);
         }
         return $this;
     }
@@ -107,9 +119,31 @@ class SocketServer
         return $this;
     }
 
-    public function readMessage()
+    public function socketSelect()
+    {
+        $this->read = $this->clients;
+        $this->write = null;
+        $this->except = null;
+        return socket_select($read, $write, $except, 0) < 1;
+    }
+
+    public function proceedBrackets(Brackets $brackets)
     {
         $this->isResource($this->connection);
+        $data = false;
+        foreach ($this->read as $read) {
+            $data = @socket_read($read, 4096, PHP_BINARY_READ);
+            if ($data === false) {
+                $key = array_search($read, $this->clients);
+                unset($this->clients[$key]);
+                continue;
+            }
+            $brackets->setStr($data);
+            $result = Application::$messages[$brackets->isCorrect() ?
+                'correctBrackets' :
+                'incorrectBrackets'];
+            socket_write($read, $result);
+        }
         return socket_read($this->connection, 2048, PHP_NORMAL_READ);
     }
 

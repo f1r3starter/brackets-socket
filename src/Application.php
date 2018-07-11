@@ -12,7 +12,7 @@ use Brackets\Brackets;
 
 class Application
 {
-    private static $messages = [
+    public static $messages = [
         'welcomeMessage' => "Please, enter your brackets \r\n",
         'correctBrackets' => "The string has correct brackets order.\r\n",
         'incorrectBrackets' => "The string has incorrect brackets order.\r\n"
@@ -21,8 +21,10 @@ class Application
     public function start()
     {
         $socketServer = new SocketServer();
+
         try {
             $socketServer->startSocket();
+            while (true) {
             $socketServer->acceptConnection();
             $socketServer->sendMessage(self::$messages['welcomeMessage']);
             $data = $socketServer->readMessage();
@@ -36,6 +38,7 @@ class Application
                 $socketServer->sendMessage($exception->getMessage() . "\r\n");
             }
             $socketServer->closeConnection();
+            }
             $socketServer->closeSocket();
         } catch (NetworkException $exception) {
             echo $exception->getMessage();
