@@ -12,11 +12,14 @@ use Brackets\Brackets;
 
 class Application
 {
-    public static $messages = [
-        'welcomeMessage' => "Please, enter your brackets \r\n",
+    private static $messages = [
+        'welcomeMessage' => "Please, enter your brackets or type '". self::EXIT_WORD . "' to quit\r\n",
         'correctBrackets' => "The string has correct brackets order.\r\n",
-        'incorrectBrackets' => "The string has incorrect brackets order.\r\n"
+        'incorrectBrackets' => "The string has incorrect brackets order.\r\n",
+        'exitMessage' => "Have a nice day!\r\n",
     ];
+
+    const EXIT_WORD = 'exit';
 
     public function start()
     {
@@ -28,9 +31,19 @@ class Application
                 if ($socketServer->socketSelect()) {
                     continue;
                 }
-                $socketServer->acceptConnection();
+                if ($socketServer->acceptConnection()) {
+                    $socketServer->sendMessage(Application::$messages['welcomeMessage']);
+                }
                 try {
-                    $socketServer->proceedBrackets(new Brackets(''));
+                    $data = $socketServer->readData();
+                    if (trim($data) === self::EXIT_WORD) {
+                        $socketServer->sendMessage(self::$messages['exitMessage']);
+                        $socketServer->closeConnection();
+                    } elseif ($data !== false) {
+                        $socketServer->sendMessage(self::$messages[$this->proceed($data) ?
+                            'correctBrackets' :
+                            'incorrectBrackets']);
+                    }
                 } catch (\InvalidArgumentException $exception) {
                     $socketServer->sendMessage($exception->getMessage() . "\r\n");
                 } catch (\Exception $exception) {
@@ -43,5 +56,14 @@ class Application
         } catch (\TypeError $exception) {
             echo $exception->getMessage();
         }
+    }
+
+
+    /**
+     * @return bool
+     */
+    private function proceed($data): bool
+    {
+        return (new Brackets($data))->isCorrect();
     }
 }

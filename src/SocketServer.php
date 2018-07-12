@@ -8,8 +8,6 @@
 
 namespace application;
 
-use brackets\Brackets;
-
 class SocketServer
 {
     private $address;
@@ -21,7 +19,6 @@ class SocketServer
     private $read = [];
     private $write = null;
     private $except = null;
-    private $writeSocket;
 
     public function __construct($address = '127.0.0.1', $port = 1235, $backlog = 5)
     {
@@ -112,9 +109,9 @@ class SocketServer
             $this->clients[] = $this->connection = $newConnection;
             $key = array_search($this->socket, $this->read);
             unset($this->read[$key]);
-            $this->sendMessage(Application::$messages['welcomeMessage']);
+            return true;
         }
-        return $this;
+        return false;
     }
 
     public function isConnecting()
@@ -137,22 +134,27 @@ class SocketServer
         return socket_select($this->read, $this->write, $this->except, 5) < 1;
     }
 
-    public function proceedBrackets(Brackets $brackets)
+    public function readData()
     {
-        $writed = false;
+        $data = false;
         foreach ($this->read as $read) {
             $data = @socket_read($read, 4096, PHP_BINARY_READ);
-            $brackets->setStr($data);
-            $result = Application::$messages[$brackets->isCorrect() ?
-                'correctBrackets' :
-                'incorrectBrackets'];
-            $writed = socket_write($read, $result);
-            $this->closeConnection();
-            $key = array_search($read, $this->clients);
-            unset($this->clients[$key]);
+            if ($data !== false) {
+                $this->connection = $read;
+                return $data;
+            } else {
+                $this->removeSocket($read);
+                $this->closeConnection();
+            }
             continue;
         }
-        return $writed !== false;
+        return $data;
+    }
+
+    private function removeSocket($socket)
+    {
+        $key = array_search($socket, $this->clients);
+        unset($this->clients[$key]);
     }
 
     public function closeConnection()
