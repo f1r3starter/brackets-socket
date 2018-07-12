@@ -18,12 +18,12 @@ class SocketServer
     private $socket;
     private $connection;
     private $clients = [];
-    private $read;
+    private $read = [];
     private $write = null;
     private $except = null;
     private $writeSocket;
 
-    public function __construct($address = '127.0.0.1', $port = 1234, $backlog = 5)
+    public function __construct($address = '127.0.0.1', $port = 1235, $backlog = 5)
     {
         $this->address = $address;
         $this->port = $port;
@@ -95,21 +95,31 @@ class SocketServer
         if (socket_listen($this->socket, 5) === false) {
             throw new NetworkException( "socket_listen() failed: reason: " . socket_strerror(socket_last_error($this->socket)) . "\n");
         }
-        $this->clients = [$this->socket];
+        $this->clients = array($this->socket);
+
+        $this->write = null;
+        $this->except = null;
         return $this;
     }
 
     public function acceptConnection()
     {
         $this->isResource($this->socket);
-        if (in_array($this->connection, $this->read)) {
-            if (($this->clients[] = $this->connection = socket_accept($this->socket)) === false) {
+        if (in_array($this->socket, $this->read)) {
+            if (($newConnection = socket_accept($this->socket)) === false) {
                 throw new NetworkException('socket_accept() failed: reason: ' . socket_strerror(socket_last_error($this->socket)) . "\n");
             }
+            $this->clients[] = $this->connection = $newConnection;
             $key = array_search($this->socket, $this->read);
-            unset($this->read, $key);
+            unset($this->read[$key]);
+            $this->sendMessage(Application::$messages['welcomeMessage']);
         }
         return $this;
+    }
+
+    public function isConnecting()
+    {
+        return \in_array($this->socket, $this->read);
     }
 
     public function sendMessage($message)
@@ -124,27 +134,25 @@ class SocketServer
         $this->read = $this->clients;
         $this->write = null;
         $this->except = null;
-        return socket_select($read, $write, $except, 0) < 1;
+        return socket_select($this->read, $this->write, $this->except, 5) < 1;
     }
 
     public function proceedBrackets(Brackets $brackets)
     {
-        $this->isResource($this->connection);
-        $data = false;
+        $writed = false;
         foreach ($this->read as $read) {
             $data = @socket_read($read, 4096, PHP_BINARY_READ);
-            if ($data === false) {
-                $key = array_search($read, $this->clients);
-                unset($this->clients[$key]);
-                continue;
-            }
             $brackets->setStr($data);
             $result = Application::$messages[$brackets->isCorrect() ?
                 'correctBrackets' :
                 'incorrectBrackets'];
-            socket_write($read, $result);
+            $writed = socket_write($read, $result);
+            $this->closeConnection();
+            $key = array_search($read, $this->clients);
+            unset($this->clients[$key]);
+            continue;
         }
-        return socket_read($this->connection, 2048, PHP_NORMAL_READ);
+        return $writed !== false;
     }
 
     public function closeConnection()

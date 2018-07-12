@@ -25,19 +25,17 @@ class Application
         try {
             $socketServer->startSocket();
             while (true) {
-            $socketServer->acceptConnection();
-            $socketServer->sendMessage(self::$messages['welcomeMessage']);
-            $data = $socketServer->readMessage();
-            try {
-                $socketServer->sendMessage(self::$messages[$this->proceed($data) ?
-                    'correctBrackets' :
-                    'incorrectBrackets']);
-            } catch (\InvalidArgumentException $exception) {
-                $socketServer->sendMessage($exception->getMessage() . "\r\n");
-            } catch (\Exception $exception) {
-                $socketServer->sendMessage($exception->getMessage() . "\r\n");
-            }
-            $socketServer->closeConnection();
+                if ($socketServer->socketSelect()) {
+                    continue;
+                }
+                $socketServer->acceptConnection();
+                try {
+                    $socketServer->proceedBrackets(new Brackets(''));
+                } catch (\InvalidArgumentException $exception) {
+                    $socketServer->sendMessage($exception->getMessage() . "\r\n");
+                } catch (\Exception $exception) {
+                    $socketServer->sendMessage($exception->getMessage() . "\r\n");
+                }
             }
             $socketServer->closeSocket();
         } catch (NetworkException $exception) {
@@ -45,14 +43,5 @@ class Application
         } catch (\TypeError $exception) {
             echo $exception->getMessage();
         }
-    }
-
-
-    /**
-     * @return bool
-     */
-    private function proceed($data): bool
-    {
-        return (new Brackets($data))->isCorrect();
     }
 }
