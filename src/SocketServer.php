@@ -159,6 +159,7 @@ class SocketServer
 
     public function closeConnection()
     {
+        $this->removeSocket($this->connection);
         socket_close($this->connection);
         return $this;
     }
