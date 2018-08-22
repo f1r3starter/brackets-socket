@@ -19,12 +19,34 @@ class SocketServer
     private $read = [];
     private $write = null;
     private $except = null;
+    private $lastSent;
+    private $queue = [];
 
-    public function __construct($address = '127.0.0.1', $port = 1235, $backlog = 5)
+    public function __construct($address = '127.0.0.1', $port = 1234, $backlog = 5)
     {
         $this->address = $address;
         $this->port = $port;
         $this->backlog = $backlog;
+    }
+
+    public function addToQueue($time, $data)
+    {
+        $this->queue[] = [$time, $data];
+    }
+
+    public function writeToFile()
+    {
+        if ($this->queue) {
+            $val = array_shift($this->queue);
+            if ($val && isset($val[0])) {
+                if (!$this->lastSent || $val[0] - $this->lastSent >= 1) {
+                    file_put_contents('queue.txt', $val[1], FILE_APPEND);
+                    $this->lastSent = $val[0];
+                } else {
+                    $this->queue[] = $val;
+                }
+            }
+        }
     }
 
     public function startSocket()

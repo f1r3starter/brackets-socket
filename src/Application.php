@@ -28,11 +28,12 @@ class Application
         try {
             $socketServer->startSocket();
             while (true) {
+                $socketServer->writeToFile();
                 if ($socketServer->socketSelect()) {
                     continue;
                 }
                 if ($socketServer->acceptConnection()) {
-                    $socketServer->sendMessage(Application::$messages['welcomeMessage']);
+                    $socketServer->sendMessage("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 3\nContent-Type: text/html\nConnection: Closed\n\n123");
                 }
                 try {
                     $data = $socketServer->readData();
@@ -40,9 +41,9 @@ class Application
                         $socketServer->sendMessage(self::$messages['exitMessage']);
                         $socketServer->closeConnection();
                     } elseif ($data !== false) {
-                        $socketServer->sendMessage(self::$messages[$this->proceed($data) ?
-                            'correctBrackets' :
-                            'incorrectBrackets']);
+                        $socketServer->addToQueue(time(), $data);
+                        $socketServer->closeConnection();
+             //           $socketServer->sendMessage("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 0\nContent-Type: text/html\nConnection: Closed\n");
                     }
                 } catch (\InvalidArgumentException $exception) {
                     $socketServer->sendMessage($exception->getMessage() . "\r\n");
